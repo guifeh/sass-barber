@@ -8,6 +8,13 @@
       "when": 1772666902415,
       "tag": "0000_initial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1738530000000,
+      "tag": "0001_confirmation_email_sent_at",
+      "breakpoints": true
     }
   ]
 }

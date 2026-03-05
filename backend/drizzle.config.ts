@@ -1,15 +1,19 @@
 import { defineConfig } from 'drizzle-kit';
-import 'dotenv/config';
+import path from 'path';
+import { config } from 'dotenv';
 import { z } from 'zod';
 
+config({ path: path.resolve(__dirname, '.env') });
+
 const envSchema = z.object({
-  DATABASE_URL: z.string(),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {
-  console.error('Invalid DATABASE_URL for drizzle-kit');
+  console.error('Invalid or missing DATABASE_URL for drizzle-kit.');
+  console.error('Create backend/.env with DATABASE_URL (see .env.example).');
   throw new Error('Invalid DATABASE_URL for drizzle-kit');
 }
 
