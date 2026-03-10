@@ -100,9 +100,12 @@ export async function getAvailability(
     return { slots: [], error: 'Service not found or inactive' };
   }
 
-  let barber = barberId
-    ? await getBarberProfileById(barberId)
-    : await getFirstBarberProfile();
+  const targetBarberId = barberId || svc.barberProfileId;
+  if (barberId && svc.barberProfileId !== barberId) {
+    return { slots: [], error: 'Service does not belong to the selected barber' };
+  }
+
+  let barber = await getBarberProfileById(targetBarberId);
   if (!barber) {
     return { slots: [], error: 'No barber available' };
   }
@@ -199,6 +202,9 @@ export async function createAppointment(
   const [svc] = await db.select().from(services).where(eq(services.id, data.serviceId));
   if (!svc || !svc.active) {
     return { appointment: null, error: 'Service not found or inactive' };
+  }
+  if (svc.barberProfileId !== data.barberId) {
+    return { appointment: null, error: 'Service does not belong to the selected barber' };
   }
 
   const barber = await getBarberProfileById(data.barberId);

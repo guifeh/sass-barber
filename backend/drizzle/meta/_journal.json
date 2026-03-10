@@ -15,6 +15,13 @@
       "when": 1738530000000,
       "tag": "0001_confirmation_email_sent_at",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773107398869,
+      "tag": "0002_silent_blue_blade",
+      "breakpoints": true
     }
   ]
 }

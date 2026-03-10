@@ -26,9 +26,14 @@ export const barberProfileRelations = relations(barberProfile, ({
   user: one(users),
   appointments: many(appointments),
   settings: one(barberSettings),
+  services: many(services),
 }));
 
-export const servicesRelations = relations(services, ({ many }) => ({
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  barberProfile: one(barberProfile, {
+    fields: [services.barberProfileId],
+    references: [barberProfile.id],
+  }),
   appointments: many(appointments),
 }));
 

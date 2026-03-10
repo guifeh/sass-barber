@@ -153,18 +153,63 @@ Resposta (200): `{ "message": "Service deleted" }`. (404 se o serviço não exis
 
 ---
 
-### 6. Disponibilidade e agendamentos
+### 6. Gerenciamento do Barbeiro (SaaS)
+
+Exigem token com `role: "barbeiro"`.
+
+#### 6.1 Meu Perfil
+**GET** `http://localhost:3333/barber/profile/me`
+Retorna os dados públicos do barbeiro (nome, bio, foto).
+
+**PUT** `http://localhost:3333/barber/profile/me`
+- Body (JSON opcional): `displayName`, `bio`, `photoUrl`
+Atualiza o perfil.
+
+#### 6.2 Minhas Configurações
+**GET** `http://localhost:3333/barber/settings/me`
+Retorna as preferências de agendamento (intervalos, antecedência, horário de funcionamento).
+
+**PUT** `http://localhost:3333/barber/settings/me`
+- Body (JSON opcional): `slotIntervalMinutes`, `minAdvanceBookingMinutes`, `maxAdvanceBookingDays`, `minCancelMinutes`, `weeklyHours`
+Atualiza as configurações da barbearia.
+
+#### 6.3 Dashboard e Métricas
+**GET** `http://localhost:3333/dashboard/metrics`
+Retorna o número de agendamentos e faturamento projetado de hoje. Exemplo:
+`{ "totalAppointmentsToday": 5, "projectedRevenueTodayCents": 17500 }`
+
+---
+
+### 7. Rotas Públicas (SaaS - Clientes)
+
+Não exigem autenticação. Usadas para clientes encontrarem barbeiros e visualizarem horários livres.
+
+#### 7.1 Listar Barbeiros
+**GET** `http://localhost:3333/public/barbers` (Aceita query `?search=nome`)
+Busca e lista barbeiros ativos.
+
+#### 7.2 Serviços do Barbeiro
+**GET** `http://localhost:3333/public/barbers/:barberId/services`
+Lista os serviços ativos de um barbeiro específico.
+
+#### 7.3 Disponibilidade do Barbeiro (Pública)
+**GET** `http://localhost:3333/public/barbers/:barberId/availability?date=YYYY-MM-DD&serviceId=UUID`
+Lista horários livres de um barbeiro para um respectivo serviço em um dia específico.
+
+---
+
+### 8. Disponibilidade e agendamentos (Logados)
 
 Todas as rotas abaixo (exceto confirmação por link) exigem **Authorization: Bearer SEU_ACCESS_TOKEN**.
 
-#### 6.1 Slots disponíveis  
+#### 8.1 Slots disponíveis (Interno)  
 **GET** `http://localhost:3333/availability?date=YYYY-MM-DD&serviceId=UUID`
 
 - Query: `date` (obrigatório), `serviceId` (obrigatório), `barberId` (opcional; se omitido, usa o primeiro barbeiro).
 - Resposta (200): `{ "slots": [ { "start": "ISO datetime", "end": "ISO datetime" }, ... ] }`.  
 - (400) se data/serviço inválido ou serviço inativo.
 
-#### 6.2 Criar agendamento  
+#### 8.2 Criar agendamento  
 **POST** `http://localhost:3333/appointments`
 
 - Body (raw JSON):
@@ -179,26 +224,26 @@ Todas as rotas abaixo (exceto confirmação por link) exigem **Authorization: Be
 - Resposta (201): agendamento criado (inclui `confirmationToken`, `confirmationDeadline`).  
 - (400) se fora do horário, slot ocupado, antecedência inválida, etc.
 
-#### 6.3 Meus agendamentos (cliente)  
+#### 8.3 Meus agendamentos (cliente)  
 **GET** `http://localhost:3333/appointments/me`
 
 - Resposta (200): array de agendamentos do usuário logado.
 
-#### 6.4 Agenda do barbeiro  
+#### 8.4 Agenda do barbeiro  
 **GET** `http://localhost:3333/appointments/barber?from=ISO&to=ISO`
 
 - Admin: vê o primeiro barbeiro. Barbeiro: vê a própria agenda.
 - Query opcional: `from` e `to` (ISO datetime) para filtrar por período.
 - Resposta (200): array de agendamentos. (404) se não houver perfil de barbeiro.
 
-#### 6.5 Cancelar agendamento  
+#### 8.5 Cancelar agendamento  
 **POST** `http://localhost:3333/appointments/:id/cancel`
 
 - Cliente pode cancelar o próprio; admin/barbeiro pode cancelar qualquer um. Respeita `min_cancel_minutes` das configurações do barbeiro.
 - Resposta (200): `{ "message": "Appointment cancelled" }`.  
 - (400) se já cancelado ou fora do prazo; (403) se não autorizado; (404) se não existir.
 
-#### 6.6 Confirmar agendamento (link do e-mail)  
+#### 8.6 Confirmar agendamento (link do e-mail)  
 **GET** `http://localhost:3333/appointments/confirm?token=TOKEN`
 
 - Público (sem auth). Usado no link enviado por e-mail para o cliente confirmar.
@@ -206,7 +251,7 @@ Todas as rotas abaixo (exceto confirmação por link) exigem **Authorization: Be
 - Se o cliente abrir no navegador (Accept: text/html), a API retorna uma página HTML simples de sucesso.
 - (400) se token inválido ou agendamento já cancelado.
 
-#### 6.7 Cancelar agendamento (link do e-mail)  
+#### 8.7 Cancelar agendamento (link do e-mail)  
 **GET** `http://localhost:3333/appointments/cancel?token=TOKEN`
 
 - Público (sem auth). Usado no link enviado no e-mail de lembrete para o cliente cancelar.

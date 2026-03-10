@@ -38,7 +38,10 @@ export async function servicesRoutes(
       },
     },
     handler: async (_request, reply) => {
-      const items = await listServices(false);
+      // If the user has a barberProfileId, we filter by it. Admins see all by default or we can filter if needed.
+      const user = _request.user as { role?: string; barberProfileId?: string };
+      const barberId = user.role === 'barbeiro' ? user.barberProfileId : undefined;
+      const items = await listServices(false, barberId);
       return reply.send(items);
     },
   });
@@ -104,9 +107,25 @@ export async function servicesRoutes(
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
+        400: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            errors: { type: 'object', additionalProperties: true, nullable: true },
+          },
+        },
+        500: {
+          type: 'object',
+          properties: { message: { type: 'string' } },
+        },
       },
     },
     handler: async (request, reply) => {
+      const user = request.user as { barberProfileId?: string };
+      if (!user.barberProfileId) {
+        return reply.status(400).send({ message: 'User must have a barber profile to create services' });
+      }
+
       const parsed = createServiceBodySchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
@@ -114,7 +133,7 @@ export async function servicesRoutes(
           errors: parsed.error.flatten().fieldErrors,
         });
       }
-      const service = await createService(parsed.data);
+      const service = await createService(parsed.data, user.barberProfileId);
       if (!service) {
         return reply.status(500).send({ message: 'Failed to create service' });
       }
@@ -190,6 +209,14 @@ export async function servicesRoutes(
           properties: {
             message: { type: 'string' },
           },
+        },
+        404: {
+          type: 'object',
+          properties: { message: { type: 'string' } },
+        },
+        500: {
+          type: 'object',
+          properties: { message: { type: 'string' } },
         },
       },
     },

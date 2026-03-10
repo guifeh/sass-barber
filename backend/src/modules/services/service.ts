@@ -3,9 +3,12 @@ import { services } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import type { CreateServiceBody, UpdateServiceBody } from './schemas';
 
-export async function listServices(activeOnly = false) {
-  const query = db.select().from(services).orderBy(services.name);
-  const rows = await query;
+export async function listServices(activeOnly = false, barberProfileId?: string) {
+  let query = db.select().from(services);
+  if (barberProfileId) {
+    query = query.where(eq(services.barberProfileId, barberProfileId)) as any;
+  }
+  const rows = await query.orderBy(services.name);
   if (activeOnly) {
     return rows.filter((r) => r.active);
   }
@@ -17,10 +20,11 @@ export async function getServiceById(id: string) {
   return row ?? null;
 }
 
-export async function createService(data: CreateServiceBody) {
+export async function createService(data: CreateServiceBody, barberProfileId: string) {
   const [created] = await db
     .insert(services)
     .values({
+      barberProfileId,
       name: data.name,
       description: data.description ?? null,
       durationMinutes: data.durationMinutes,

@@ -22,7 +22,7 @@ export async function authenticate(
 
 export function requireRole(...allowedRoles: AllowedRole[]) {
   return async function (request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const user = request.user;
+    const user = request.user as { role?: string };
     if (!user || !user.role) {
       return reply.status(401).send({ message: 'Unauthorized' });
     }

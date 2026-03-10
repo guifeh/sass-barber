@@ -8,6 +8,9 @@ import { sql } from 'drizzle-orm';
 import { authRoutes } from './modules/auth';
 import { servicesRoutes } from './modules/services';
 import { appointmentsRoutes } from './modules/appointments';
+import { barberRoutes } from './modules/barber';
+import { publicRoutes } from './modules/public';
+import { dashboardRoutes } from './modules/dashboard';
 import { startConfirmationRemindersJob } from './jobs/confirmation-reminders';
 
 async function buildServer() {
@@ -27,6 +30,9 @@ async function buildServer() {
   await app.register(authRoutes);
   await app.register(servicesRoutes);
   await app.register(appointmentsRoutes);
+  await app.register(barberRoutes);
+  await app.register(publicRoutes);
+  await app.register(dashboardRoutes);
 
   app.get('/health', async () => {
     try {
