@@ -29,13 +29,22 @@ export async function authRoutes(
           properties: {
             user: {
               type: 'object',
-              properties: { id: { type: 'string' }, name: { type: 'string' }, email: { type: 'string' }, role: { type: 'string' } },
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                role: { type: 'string' },
+                barberProfileId: { type: 'string' },
+              },
             },
             accessToken: { type: 'string' },
             refreshToken: { type: 'string' },
             expiresIn: { type: 'number' },
           },
         },
+        400: { type: 'object', properties: { message: { type: 'string' }, errors: { type: 'object' } } },
+        409: { type: 'object', properties: { message: { type: 'string' } } },
+        500: { type: 'object', properties: { message: { type: 'string' } } },
       },
     },
     handler: async (request, reply) => {
@@ -87,13 +96,21 @@ export async function authRoutes(
           properties: {
             user: {
               type: 'object',
-              properties: { id: { type: 'string' }, name: { type: 'string' }, email: { type: 'string' }, role: { type: 'string' } },
+              properties: { 
+                id: { type: 'string' }, 
+                name: { type: 'string' }, 
+                email: { type: 'string' }, 
+                role: { type: 'string' },
+                barberProfileId: { type: 'string' }
+              },
             },
             accessToken: { type: 'string' },
             refreshToken: { type: 'string' },
             expiresIn: { type: 'number' },
           },
         },
+        400: { type: 'object', properties: { message: { type: 'string' }, errors: { type: 'object' } } },
+        401: { type: 'object', properties: { message: { type: 'string' } } },
       },
     },
     handler: async (request, reply) => {
@@ -117,7 +134,13 @@ export async function authRoutes(
         { expiresIn: env.JWT_REFRESH_EXPIRES_IN }
       );
       return reply.send({
-        user: { id: user.id, name: user.name, email: user.email, role: user.role },
+        user: { 
+          id: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role,
+          barberProfileId: user.barberProfileId || undefined
+        },
         accessToken,
         refreshToken,
         expiresIn: 900,
@@ -142,6 +165,8 @@ export async function authRoutes(
             expiresIn: { type: 'number' },
           },
         },
+        400: { type: 'object', properties: { message: { type: 'string' }, errors: { type: 'object' } } },
+        401: { type: 'object', properties: { message: { type: 'string' } } },
       },
     },
     handler: async (request, reply) => {
@@ -199,10 +224,12 @@ export async function authRoutes(
             role: { type: 'string', enum: ['admin', 'barbeiro', 'usuario'] },
           },
         },
+        404: { type: 'object', properties: { message: { type: 'string' } } },
       },
     },
     handler: async (request, reply) => {
-      const userId = request.user!.sub;
+      const userPayload = request.user as { sub: string };
+      const userId = userPayload.sub;
       const [user] = await db
         .select({ id: users.id, name: users.name, email: users.email, role: users.role })
         .from(users)
