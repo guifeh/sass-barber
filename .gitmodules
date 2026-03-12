@@ -1,0 +1,3 @@
+[submodule "barbershop-flow"]
+	path = barbershop-flow
+	url = https://github.com/guifeh/barbershop-flow.git
