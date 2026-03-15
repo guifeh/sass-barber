@@ -1,0 +1,31 @@
+name: Deploy Frontend
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'barbershop-flow/**'
+      - '.github/workflows/frontend.yml'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: barbershop-flow/package-lock.json
+      - name: Install dependencies
+        working-directory: ./barbershop-flow
+        run: npm ci
+      - name: Build
+        working-directory: ./barbershop-flow
+        run: npm run build
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          vercel-args: '--prod'
