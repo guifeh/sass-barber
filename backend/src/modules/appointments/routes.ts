@@ -102,6 +102,7 @@ export async function appointmentsRoutes(
           },
         },
         400: { type: 'object', properties: { message: { type: 'string' } } },
+        403: { type: 'object', properties: { message: { type: 'string' } } },
         500: { type: 'object', properties: { message: { type: 'string' } } },
       },
     },
@@ -113,7 +114,11 @@ export async function appointmentsRoutes(
           errors: parsed.error.flatten().fieldErrors,
         });
       }
-      const userId = (request.user as { sub: string }).sub;
+      const user = request.user as { sub: string; role: string };
+      if (user.role === 'barbeiro') {
+        return reply.status(403).send({ message: 'Barbeiros não podem realizar agendamentos' });
+      }
+      const userId = user.sub;
       const { appointment, error } = await createAppointment(userId, parsed.data);
       if (error) {
         return reply.status(400).send({ message: error });
