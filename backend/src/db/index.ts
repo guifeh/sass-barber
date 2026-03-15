@@ -5,7 +5,7 @@ import * as schema from './schema';
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
-  ssl: env.DATABASE_URL.includes('supabase.co') || env.NODE_ENV === 'production'
+  ssl: env.DATABASE_URL.includes('supabase') || env.NODE_ENV === 'production'
     ? { rejectUnauthorized: false }
     : false,
 });
