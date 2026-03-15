@@ -5,7 +5,9 @@ import * as schema from './schema';
 
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
-  ssl: env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: env.DATABASE_URL.includes('supabase.co') || env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 export const db = drizzle(pool, { schema });
