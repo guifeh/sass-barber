@@ -48,9 +48,11 @@ export async function sendMail(options: {
   text: string;
   html?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  // Try Resend first (Option B - Production recommended)
+  const resendKey = env.RESEND_API_KEY;
   const resend = getResend();
+
   if (resend) {
+    console.log(`[notifications] Service: RESEND (Key starting with: ${resendKey?.substring(0, 4)}...)`);
     try {
       const from = env.SMTP_FROM ?? 'onboarding@resend.dev';
       const { error } = await resend.emails.send({
@@ -61,19 +63,21 @@ export async function sendMail(options: {
         html: options.html,
       });
       if (error) {
-        return { success: false, error: error.message };
+        console.error('[notifications] Resend API reported error:', error.message);
+        return { success: false, error: `Resend: ${error.message}` };
       }
       return { success: true };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      return { success: false, error: `Resend error: ${message}` };
+      console.error('[notifications] Resend exception:', message);
+      return { success: false, error: `Resend Exception: ${message}` };
     }
   }
 
-  // Fallback to Nodemailer (Option A / Development)
+  console.log('[notifications] Service: FALLBACK TO SMTP (No Resend key found)');
   const mail = getMailer();
   if (!mail) {
-    return { success: false, error: 'No email service configured (Resend or SMTP)' };
+    return { success: false, error: 'No email service configured' };
   }
   const from = env.SMTP_FROM ?? env.SMTP_USER ?? 'noreply@barbearia.local';
   try {
@@ -87,6 +91,7 @@ export async function sendMail(options: {
     return { success: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return { success: false, error: `SMTP error: ${message}` };
+    console.error('[notifications] SMTP exception:', message);
+    return { success: false, error: `SMTP: ${message}` };
   }
 }
