@@ -5,15 +5,15 @@ import * as schema from './schema';
 
 const isLocal = env.DATABASE_URL.includes('localhost') || env.DATABASE_URL.includes('127.0.0.1');
 
-const poolConfig: any = {
-  connectionString: env.DATABASE_URL,
-};
-
 if (!isLocal) {
-  poolConfig.ssl = {
-    rejectUnauthorized: false,
-  };
+  // This is the absolute bypass for self-signed certificates in chain
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
+
+const poolConfig = {
+  connectionString: env.DATABASE_URL,
+  ssl: !isLocal ? { rejectUnauthorized: false } : false,
+};
 
 export const pool = new Pool(poolConfig);
 export const db = drizzle(pool, { schema });
