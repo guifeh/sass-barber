@@ -4,7 +4,7 @@ import { registerBodySchema, loginBodySchema, refreshBodySchema } from './schema
 import { registerUser, loginUser, findUserByEmail } from './service';
 import { authenticate, requireRole } from './guards';
 import { db } from '../../db';
-import { users } from '../../db/schema';
+import { users, barberProfile } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function authRoutes(
@@ -59,12 +59,12 @@ export async function authRoutes(
       if (existing) {
         return reply.status(409).send({ message: 'Email already registered' });
       }
-      const user = await registerUser(parsed.data);
+      const user = await registerUser(parsed.data) as any;
       if (!user) {
         return reply.status(500).send({ message: 'Failed to create user' });
       }
       const accessToken = app.jwt.sign(
-        { sub: user.id, role: user.role, type: 'access' as const },
+        { sub: user.id, role: user.role, barberProfileId: user.barberProfileId || undefined, type: 'access' as const },
         { expiresIn: env.JWT_ACCESS_EXPIRES_IN }
       );
       const refreshToken = app.jwt.sign(
@@ -126,7 +126,7 @@ export async function authRoutes(
         return reply.status(401).send({ message: 'Invalid email or password' });
       }
       const accessToken = app.jwt.sign(
-        { sub: user.id, role: user.role, type: 'access' as const },
+        { sub: user.id, role: user.role, barberProfileId: user.barberProfileId || undefined, type: 'access' as const },
         { expiresIn: env.JWT_ACCESS_EXPIRES_IN }
       );
       const refreshToken = app.jwt.sign(
@@ -186,14 +186,15 @@ export async function authRoutes(
           return reply.status(401).send({ message: 'Invalid refresh token' });
         }
         const [user] = await db
-          .select({ id: users.id, role: users.role })
+          .select({ id: users.id, role: users.role, barberProfileId: barberProfile.id })
           .from(users)
+          .leftJoin(barberProfile, eq(users.id, barberProfile.userId))
           .where(eq(users.id, payload.sub));
         if (!user) {
           return reply.status(401).send({ message: 'User not found' });
         }
         const accessToken = app.jwt.sign(
-          { sub: user.id, role: user.role, type: 'access' as const },
+          { sub: user.id, role: user.role, barberProfileId: user.barberProfileId || undefined, type: 'access' as const },
           { expiresIn: env.JWT_ACCESS_EXPIRES_IN }
         );
         const newRefreshToken = app.jwt.sign(
