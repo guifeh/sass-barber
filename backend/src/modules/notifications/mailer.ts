@@ -22,6 +22,14 @@ export function getMailer(): nodemailer.Transporter | null {
       user: env.SMTP_USER,
       pass: env.SMTP_PASS,
     },
+    debug: true,
+    logger: true,
+    connectionTimeout: 10000, // 10s
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+    tls: {
+      rejectUnauthorized: false
+    }
   });
   return transporter;
 }
