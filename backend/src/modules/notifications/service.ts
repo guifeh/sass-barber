@@ -52,8 +52,12 @@ async function buildEmailData(appointmentId: string): Promise<AppointmentEmailDa
  * Call this after creating an appointment (fire-and-forget is fine).
  */
 export async function sendAppointmentCreatedEmails(appointmentId: string): Promise<void> {
+  console.log(`[notifications] Sending immediate booking emails for appointment ${appointmentId}...`);
   const data = await buildEmailData(appointmentId);
-  if (!data) return;
+  if (!data) {
+    console.error(`[notifications] Could not build email data for appointment ${appointmentId}`);
+    return;
+  }
 
   const forUser = appointmentCreatedForUser(data);
   const forBarber = appointmentCreatedForBarber(data);
@@ -63,11 +67,16 @@ export async function sendAppointmentCreatedEmails(appointmentId: string): Promi
     sendMail({ to: data.barberEmail, ...forBarber }),
   ]);
 
-  if (!userResult.success) {
-    console.error('[notifications] Failed to send appointment created email to user:', userResult.error);
+  if (userResult.success) {
+    console.log(`[notifications] Immediate email sent to user: ${data.userEmail}`);
+  } else {
+    console.error(`[notifications] Failed to send email to user ${data.userEmail}:`, userResult.error);
   }
-  if (!barberResult.success) {
-    console.error('[notifications] Failed to send appointment created email to barber:', barberResult.error);
+
+  if (barberResult.success) {
+    console.log(`[notifications] Immediate email sent to barber: ${data.barberEmail}`);
+  } else {
+    console.error(`[notifications] Failed to send email to barber ${data.barberEmail}:`, barberResult.error);
   }
 }
 
@@ -91,12 +100,16 @@ export async function sendConfirmationReminderEmails(): Promise<{ sent: number; 
       )
     );
 
+  console.log(`[notifications] Reminder check: found ${due.length} appointments pending confirmation within window.`);
+
   let sent = 0;
   let errors = 0;
 
   for (const apt of due) {
+    console.log(`[notifications] Sending reminder for appointment ${apt.id}...`);
     const data = await buildEmailData(apt.id);
     if (!data) {
+      console.error(`[notifications] Could not build email data for appointment ${apt.id}`);
       errors++;
       continue;
     }
@@ -107,9 +120,10 @@ export async function sendConfirmationReminderEmails(): Promise<{ sent: number; 
         .update(appointments)
         .set({ confirmationEmailSentAt: now, updatedAt: now })
         .where(eq(appointments.id, apt.id));
+      console.log(`[notifications] Reminder sent and DB updated for appointment ${apt.id}`);
       sent++;
     } else {
-      console.error('[notifications] Failed to send confirmation reminder:', result.error);
+      console.error(`[notifications] Failed to send reminder for ${apt.id}:`, result.error);
       errors++;
     }
   }
