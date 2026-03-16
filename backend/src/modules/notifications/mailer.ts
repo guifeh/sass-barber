@@ -48,9 +48,50 @@ export async function sendMail(options: {
   text: string;
   html?: string;
 }): Promise<{ success: boolean; error?: string }> {
+  const brevoKey = env.BREVO_API_KEY;
   const resendKey = env.RESEND_API_KEY;
-  const resend = getResend();
 
+  // Option 1: Brevo (Recommended for No-Domain situations)
+  if (brevoKey) {
+    console.log('[notifications] Service: BREVO API');
+    try {
+      const fromEmail = env.SMTP_FROM;
+      const emailPayload: Record<string, unknown> = {
+        to: [{ email: options.to }],
+        subject: options.subject,
+        textContent: options.text,
+        htmlContent: options.html,
+      };
+      if (fromEmail) {
+        emailPayload.sender = { email: fromEmail, name: 'Sass Barber' };
+      }
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': brevoKey,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const msg = typeof errorData === 'object' ? JSON.stringify(errorData) : String(errorData);
+        console.error('[notifications] Brevo API reported error:', msg);
+        return { success: false, error: `Brevo: ${msg}` };
+      }
+
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[notifications] Brevo exception:', message);
+      return { success: false, error: `Brevo Exception: ${message}` };
+    }
+  }
+
+  // Option 2: Resend (Requires Domain for non-authorized recipients)
+  const resend = getResend();
   if (resend) {
     console.log(`[notifications] Service: RESEND (Key starting with: ${resendKey?.substring(0, 4)}...)`);
     try {
@@ -74,7 +115,7 @@ export async function sendMail(options: {
     }
   }
 
-  console.log('[notifications] Service: FALLBACK TO SMTP (No Resend key found)');
+  console.log('[notifications] Service: FALLBACK TO SMTP (No API keys found)');
   const mail = getMailer();
   if (!mail) {
     return { success: false, error: 'No email service configured' };
