@@ -48,11 +48,6 @@ export async function notificationRoutes(
       const { to } = request.body;
 
       console.log('[notifications] Test email requested to:', to);
-      console.log('[notifications] Environment check:');
-      console.log('  - BREVO_API_KEY:', env.BREVO_API_KEY ? `Set (${env.BREVO_API_KEY.substring(0, 10)}...)` : 'NOT SET');
-      console.log('  - RESEND_API_KEY:', env.RESEND_API_KEY ? `Set (${env.RESEND_API_KEY.substring(0, 10)}...)` : 'NOT SET');
-      console.log('  - SMTP_HOST:', env.SMTP_HOST ?? 'NOT SET');
-      console.log('  - SMTP_FROM:', env.SMTP_FROM ?? 'NOT SET');
 
       const result = await sendMail({
         to,
