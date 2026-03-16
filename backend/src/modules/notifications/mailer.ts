@@ -51,6 +51,13 @@ export async function sendMail(options: {
   const brevoKey = env.BREVO_API_KEY;
   const resendKey = env.RESEND_API_KEY;
 
+  console.log('[notifications] Email configuration check:');
+  console.log('  BREVO_API_KEY:', brevoKey ? `SET (${brevoKey.substring(0, 8)}...)` : 'NOT SET');
+  console.log('  RESEND_API_KEY:', resendKey ? `SET (${resendKey.substring(0, 8)}...)` : 'NOT SET');
+  console.log('  SMTP_HOST:', env.SMTP_HOST ?? 'NOT SET');
+  console.log('  SMTP_USER:', env.SMTP_USER ?? 'NOT SET');
+  console.log('  SMTP_FROM:', env.SMTP_FROM ?? 'NOT SET');
+
   // Option 1: Brevo (Recommended for No-Domain situations)
   if (brevoKey) {
     console.log('[notifications] Service: BREVO API');

@@ -12,6 +12,7 @@ import { barberRoutes } from './modules/barber';
 import { publicRoutes } from './modules/public';
 import { dashboardRoutes } from './modules/dashboard';
 import { uploadRoutes } from './modules/upload';
+import { notificationRoutes } from './modules/notifications';
 import { startConfirmationRemindersJob } from './jobs/confirmation-reminders';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
@@ -51,6 +52,7 @@ async function buildServer() {
   await app.register(publicRoutes);
   await app.register(dashboardRoutes);
   await app.register(uploadRoutes);
+  await app.register(notificationRoutes);
 
   app.get('/health', async () => {
     try {
